@@ -108,74 +108,57 @@ Produces the strict JSON output format.
     }
 
     return output'''
-    import json
-import random
-import time
+def generate_output(
+    suspicious_accounts: dict,
+    all_rings: list,
+    total_nodes: int,
+    processing_time: float,
+) -> dict:
 
-def generate_fraud_report(num_accounts=2, num_rings=1):
-    start_time = time.time()
+    # Create lookup for rings by id
+    ring_lookup = {ring.get("ring_id"): ring for ring in all_rings}
 
-    suspicious_accounts = []
-    fraud_rings = []
+    results = []
 
-    # Generate suspicious accounts
-    for i in range(num_accounts):
-        account_id = f"ACC_{10000 + i}"
-        ring_id = f"RING_{1 + (i % num_rings)}"
+    for account_id, data in sorted(
+        suspicious_accounts.items(),
+        key=lambda x: x[1].get("suspicion_score", 0),
+        reverse=True,
+    ):
 
-        account = {
-            "account_id": account_id,
-            "suspicion_score": round(random.uniform(75, 99), 1),
-            "detected_patterns": random.sample(
-                ["cycle_length_3", "cycle_length_4", "fan_out", "high_velocity", "layering", "rapid_transfers"],
-                k=random.randint(1, 2)
-            ),
-            "ring_id": ring_id
-        }
+        ring_ids = data.get("ring_ids") or []
+        ring_id = ring_ids[0] if ring_ids else None
 
-        suspicious_accounts.append(account)
-
-    # Generate fraud rings
-    for r in range(num_rings):
-        ring_id = f"RING_{r+1}"
-
-        members = [
-            acc["account_id"]
-            for acc in suspicious_accounts
-            if acc["ring_id"] == ring_id
-        ]
-
-        ring = {
+        suspicious_obj = {
+            "account_id": str(account_id),
+            "suspicion_score": float(data.get("suspicion_score", 0)),
+            "detected_patterns": list(data.get("detected_patterns", [])),
             "ring_id": ring_id,
-            "member_accounts": members,
-            "pattern_type": random.choice(["cycle", "fan_out", "layering"]),
-            "risk_score": round(random.uniform(85, 99), 1)
         }
 
-        fraud_rings.append(ring)
+        ring_data = ring_lookup.get(ring_id, {})
 
-    end_time = time.time()
+        fraud_ring_obj = {
+            "ring_id": ring_id,
+            "member_accounts": list(ring_data.get("members", [])),
+            "pattern_type": ring_data.get("pattern_type"),
+            "risk_score": float(ring_data.get("risk_score", 0)),
+        }
 
-    result = {
-        "suspicious_accounts": suspicious_accounts,
-        "fraud_rings": fraud_rings,
+        results.append({
+            "suspicious_account": suspicious_obj,
+            "fraud_ring": fraud_ring_obj,
+        })
+
+    output = {
+        "results": results,
         "summary": {
-            "total_accounts_analyzed": 500 + random.randint(0, 1000),
-            "suspicious_accounts_flagged": len(suspicious_accounts),
-            "fraud_rings_detected": len(fraud_rings),
-            "processing_time_seconds": round(end_time - start_time, 2)
-        }
+            "total_accounts_analyzed": int(total_nodes),
+            "suspicious_accounts_flagged": len(results),
+            "fraud_rings_detected": len(all_rings),
+            "processing_time_seconds": round(float(processing_time), 2),
+        },
     }
 
-    return result
+    return output
 
-
-# Example usage
-if _name_ == "_main_":
-    report = generate_fraud_report(num_accounts=3, num_rings=2)
-
-    # Save to JSON file
-    with open("fraud_report.json", "w") as f:
-        json.dump(report, f, indent=2)
-
-    print(json.dumps(report, indent=2))
