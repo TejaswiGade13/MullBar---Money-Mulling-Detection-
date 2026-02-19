@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 from engine.ingestion import parse_csv
 from engine.pipeline import analyze_pipeline
 
+# In-memory cache for analysis results (hash of CSV content -> result)
+analysis_cache = {}
+
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
 
