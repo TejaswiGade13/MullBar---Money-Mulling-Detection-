@@ -10,8 +10,9 @@ import traceback
 
 from flask import Flask, request, jsonify, send_from_directory
 
-from engine.ingestion import parse_csv
-from engine.pipeline import analyze
+# Deferred imports for faster startup
+# from engine.ingestion import parse_csv
+# from engine.pipeline import analyze
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.json.sort_keys = False
@@ -38,6 +39,9 @@ def analyze_csv():
         return jsonify({"status": "error", "detail": "File must be a CSV."}), 400
 
     try:
+        from engine.ingestion import parse_csv
+        from engine.pipeline import analyze
+        
         content = file.read()
         df = parse_csv(content)
     except ValueError as e:
