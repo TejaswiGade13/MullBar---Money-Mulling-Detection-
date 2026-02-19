@@ -565,11 +565,16 @@ function renderFraudRingTable(rings) {
                     </thead>
                     <tbody>
                         ${rings.map((ring, i) => `
-                            <tr class="transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/5"
-                                style="${i > 0 ? 'border-top: 1px solid var(--color-border);' : ''}">
+                            <!-- Main Row -->
+                            <tr class="ring-row transition-colors duration-150 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+                                style="${i > 0 ? 'border-top: 1px solid var(--color-border);' : ''}"
+                                onclick="toggleRingDetails('details-${ring.ring_id}', this)">
                                 <td class="px-3 sm:px-4 py-2 sm:py-3">
-                                    <span class="font-mono font-bold text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border"
+                                    <span class="font-mono font-bold text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border flex items-center gap-1.5 w-fit"
                                           style="background: rgba(152,37,152,0.1); color: var(--color-text-main); border-color: rgba(152,37,152,0.3);">
+                                        <svg class="ring-chevron w-2.5 h-2.5 transform transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
                                         ${ring.ring_id}
                                     </span>
                                 </td>
@@ -588,12 +593,40 @@ function renderFraudRingTable(rings) {
                                     </span>
                                 </td>
                             </tr>
+                            <!-- Detail Row -->
+                            <tr id="details-${ring.ring_id}" class="hidden" style="background: rgba(0,0,0,0.02);">
+                                <td colspan="4" class="px-3 sm:px-4 py-3 sm:py-4">
+                                    <div class="flex flex-col gap-2 slide-up">
+                                        <p class="text-[10px] uppercase tracking-wider font-bold opacity-50" style="color: var(--color-text-muted);">Member Accounts</p>
+                                        <p class="text-xs break-all leading-relaxed font-mono" style="color: var(--color-text-main);">
+                                            ${(ring.member_accounts || []).join(', ')}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         </div>
     `;
+}
+
+/**
+ * Toggle Fraud Ring Detail Row
+ */
+function toggleRingDetails(id, rowEl) {
+    const detailRow = document.getElementById(id);
+    const chevron = rowEl.querySelector('.ring-chevron');
+
+    if (detailRow) {
+        const isHidden = detailRow.classList.toggle('hidden');
+        if (chevron) {
+            chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(90deg)';
+        }
+        // Update row background for better context
+        rowEl.style.background = isHidden ? '' : 'rgba(0,0,0,0.04)';
+    }
 }
 
 // ─── Risk Heatmap ─────────────────────────────
