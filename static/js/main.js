@@ -207,100 +207,7 @@ async function analyzeFile() {
 // ═══════════════════════════════════════════════
 
 function renderDashboard(data) {
-    let results, graph, explanations;
-
-    // Handle new Account-Centric response format (User Request 331)
-    if (data.results && Array.isArray(data.results) && data.results.length > 0 && data.results[0].suspicious_account) {
-        console.log("Processing account-centric results...");
-        const listData = data.results;
-
-        // We need to reconstruct the "global" view for the dashboard
-        const uniqueSuspicious = [];
-        const seenAccs = new Set();
-
-        const uniqueRings = [];
-        const seenRings = new Set();
-
-        listData.forEach(entry => {
-            // Process Account
-            const acc = entry.suspicious_account;
-            if (acc && !seenAccs.has(acc.account_id)) {
-                seenAccs.add(acc.account_id);
-                uniqueSuspicious.push(acc);
-            }
-
-            // Process Ring
-            const ring = entry.fraud_ring;
-            if (ring && ring.ring_id && ring.ring_id !== "N/A" && ring.ring_id !== "RING_000") {
-                if (!seenRings.has(ring.ring_id)) {
-                    seenRings.add(ring.ring_id);
-                    uniqueRings.push(ring);
-                }
-            }
-        });
-
-        results = {
-            summary: data.summary,
-            suspicious_accounts: uniqueSuspicious,
-            fraud_rings: uniqueRings
-        };
-        graph = data.graph;
-        explanations = data.explanations;
-    }
-    // Handle previous List-of-Groups format (Migration support/Fallback)
-    else if (Array.isArray(data.results)) {
-        console.log("Processing list-based groups...");
-        const listData = data.results;
-
-        // Aggregate Global Stats
-        const summary = {
-            total_accounts_analyzed: data.graph ? data.graph.nodes.length : 0,
-            suspicious_accounts_flagged: 0,
-            fraud_rings_detected: 0,
-            processing_time_seconds: listData[0]?.summary?.processing_time || 0
-        };
-
-        const allSuspicious = [];
-        const allRings = [];
-
-        listData.forEach(entry => {
-            // Aggregate rings
-            if (entry.fraud_rings) {
-                allRings.push(...entry.fraud_rings);
-            }
-            // Aggregate accounts
-            if (entry.suspicious_accounts) {
-                allSuspicious.push(...entry.suspicious_accounts);
-            }
-        });
-
-        // Deduplicate accounts (an account might appear in multiple ring entries)
-        const seenAccs = new Set();
-        const uniqueSuspicious = [];
-        allSuspicious.forEach(acc => {
-            if (!seenAccs.has(acc.account_id)) {
-                seenAccs.add(acc.account_id);
-                uniqueSuspicious.push(acc);
-            }
-        });
-
-        summary.suspicious_accounts_flagged = uniqueSuspicious.length;
-        summary.fraud_rings_detected = allRings.length;
-
-        results = {
-            summary: summary,
-            suspicious_accounts: uniqueSuspicious,
-            fraud_rings: allRings
-        };
-        graph = data.graph;
-        explanations = data.explanations;
-    } else {
-        // Fallback for old object format
-        results = data.results;
-        graph = data.graph;
-        explanations = data.explanations;
-    }
-
+    const { results, graph, explanations } = data;
     selectedAccount = null;
     activeTab = 'graph';
 
@@ -370,11 +277,32 @@ function renderDashboard(data) {
     });
 
     document.getElementById('download-btn').addEventListener('click', () => {
-        // Fix: Pack exactly results and summary from the original API response
+        // --- DYNAMIC TRANSFORMATION TO ACCOUNT-CENTRIC FORMAT ---
+        const flatData = analysisData.results;
+        const summary = flatData.summary;
+        const accounts = flatData.suspicious_accounts;
+        const rings = flatData.fraud_rings;
+
+        const ringsMap = {};
+        rings.forEach(r => { ringsMap[r.ring_id] = r; });
+
+        const resultsList = accounts.map(acc => {
+            const ring = ringsMap[acc.ring_id] || {
+                ring_id: "N/A", member_accounts: [], pattern_type: "none", risk_score: 0
+            };
+            return {
+                suspicious_account: acc,
+                fraud_ring: ring,
+                summary: summary
+            };
+        });
+
         const exportObj = {
-            results: analysisData.results,
-            summary: analysisData.summary
+            results: resultsList,
+            summary: summary
         };
+        // ---------------------------------------------------------
+
         const json = JSON.stringify(exportObj, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
