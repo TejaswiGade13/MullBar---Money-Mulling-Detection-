@@ -182,12 +182,28 @@ async function analyzeFile() {
             method: 'POST',
             body: formData,
         });
-        const data = await response.json();
 
         if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            showError(`Server Error (${response.status}): ${response.statusText}`);
+            setState('landing');
+            return;
+        }
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonErr) {
+            console.error('JSON Parse Error:', jsonErr);
+            showError('Server returned an invalid response. Check console for details.');
+            setState('landing');
+            return;
+        }
+
         if (data.status === 'success' || Array.isArray(data.results)) {
-            // Support both old object format and new list format
             analysisData = data;
             renderDashboard(data);
             setState('results');
@@ -197,7 +213,8 @@ async function analyzeFile() {
         }
     } catch (err) {
         if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
-        showError(err.message || 'Something went wrong.');
+        console.error('Fetch Error:', err);
+        showError(err.message || 'Network error or connection lost.');
         setState('landing');
     }
 }
