@@ -8,7 +8,11 @@ import io
 import os
 import traceback
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Deferred imports for faster startup
 # from engine.ingestion import parse_csv
@@ -21,7 +25,12 @@ app.config["JSON_SORT_KEYS"] = False
 
 @app.route("/")
 def index():
-    return send_from_directory("templates", "index.html")
+    return render_template("index.html")
+
+
+@app.route("/health")
+def health():
+    return "OK", 200
 
 
 @app.route("/api/analyze", methods=["POST"])
