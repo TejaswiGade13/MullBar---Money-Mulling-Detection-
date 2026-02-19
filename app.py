@@ -14,6 +14,8 @@ from engine.ingestion import parse_csv
 from engine.pipeline import analyze
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
+app.json.sort_keys = False
+app.config["JSON_SORT_KEYS"] = False
 
 
 @app.route("/")
