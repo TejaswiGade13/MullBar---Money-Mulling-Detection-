@@ -11,96 +11,77 @@ def generate_output(
     all_rings: list[dict],
     total_nodes: int,
     processing_time: float,
-) -> list[dict]:
+) -> dict:
     """
-    Generate a List of Grouped Entries (Cases).
-    Each entry contains:
-      - summary: stats for this specific group/ring
-      - fraud_rings: list containing the specific ring definition
-      - suspicious_accounts: list of detailed accounts in this ring
-    """
-    grouped_results = []
+    Generate output in the User-Requested Account-Centric Format.
     
-    # helper to format account
-    def fmt_acc(acc_id, data, primary_ring):
-        return {
-            "account_id": acc_id,
-            "suspicion_score": float(data["suspicion_score"]),
-            "detected_patterns": data["detected_patterns"],
-            "ring_id": primary_ring,
+    Structure:
+    {
+      "results": [
+        {
+          "suspicious_account": { ... },
+          "fraud_ring": { ... }
         }
+      ],
+      "summary": { ... }
+    }
+    """
+    results_list = []
 
-    # Helper to format ring
-    def fmt_ring(r):
-        return {
-            "ring_id": r.get("ring_id", "RING_000"),
-            "member_accounts": r["members"],
-            "pattern_type": r["pattern_type"],
-            "risk_score": float(r.get("risk_score", 0)),
-        }
+    # Map ring_id -> ring_data for fast lookup
+    rings_map = {r.get("ring_id", "RING_000"): r for r in all_rings}
 
-    # 1. Map ring_id -> [Accounts]
-    accounts_by_ring = defaultdict(list)
-    isolated_accounts = []
-
+    # Iterate through all suspicious accounts
     for acc_id, data in sorted(
         suspicious_accounts.items(),
         key=lambda x: x[1]["suspicion_score"],
         reverse=True,
     ):
-        r_ids = data.get("ring_ids", [])
-        if r_ids:
-            # Add to primary ring (first one)
-            # We could add to all, but primary avoids duplication if user just wants simple list
-            primary = r_ids[0]
-            accounts_by_ring[primary].append(fmt_acc(acc_id, data, primary))
-        else:
-            isolated_accounts.append(fmt_acc(acc_id, data, "RING_000"))
-
-    # 2. Build entries for each detected Ring
-    # Sort rings by risk score descending
-    sorted_rings = sorted(all_rings, key=lambda x: x.get("risk_score", 0), reverse=True)
-
-    for ring in sorted_rings:
-        rid = ring.get("ring_id")
-        members = accounts_by_ring.get(rid, [])
+        # 1. Format Account Data
+        # Use first ring as primary if available
+        primary_ring_id = data["ring_ids"][0] if data.get("ring_ids") else "RING_000"
         
-        entry = {
-            "summary": {
-                "group_type": "fraud_ring",
-                "description": f"Detected {ring['pattern_type']} pattern",
-                "account_count": int(len(members)),
-                "risk_score": float(ring.get("risk_score", 0)),
-            },
-            "fraud_rings": [fmt_ring(ring)],
-            "suspicious_accounts": members
+        account_obj = {
+            "account_id": acc_id,
+            "suspicion_score": float(data["suspicion_score"]),
+            "detected_patterns": data["detected_patterns"],
+            "ring_id": primary_ring_id
         }
-        grouped_results.append(entry)
 
-    # 3. Entry for Isolated Suspicious Accounts (if any)
-    if isolated_accounts:
-        grouped_results.append({
-            "summary": {
-                "group_type": "isolated_suspicious",
-                "description": "Suspicious accounts not linked to any ring",
-                "account_count": int(len(isolated_accounts)),
+        # 2. Format Associated Ring Data
+        ring_data = rings_map.get(primary_ring_id)
+        
+        if ring_data:
+            ring_obj = {
+                "ring_id": ring_data.get("ring_id", "RING_000"),
+                "member_accounts": ring_data["members"],
+                "pattern_type": ring_data["pattern_type"],
+                "risk_score": float(ring_data.get("risk_score", 0))
+            }
+        else:
+            # Fallback if no ring found (or RING_000)
+            ring_obj = {
+                "ring_id": "N/A",
+                "member_accounts": [],
+                "pattern_type": "none",
                 "risk_score": 0.0
-            },
-            "fraud_rings": [],
-            "suspicious_accounts": isolated_accounts
-        })
-    
-    # 4. If no detections at all, return empty structure with global summary
-    if not grouped_results:
-         grouped_results.append({
-            "summary": {
-                "group_type": "analysis_stats",
-                "description": "No fraud patterns detected",
-                "total_analyzed": int(total_nodes),
-                "processing_time": round(float(processing_time), 2)
-            },
-            "fraud_rings": [],
-            "suspicious_accounts": []
-         })
+            }
 
-    return grouped_results
+        # 3. Create Entry
+        results_list.append({
+            "suspicious_account": account_obj,
+            "fraud_ring": ring_obj
+        })
+
+    # Global Summary
+    summary_obj = {
+        "total_accounts_analyzed": int(total_nodes),
+        "suspicious_accounts_flagged": int(len(results_list)),
+        "fraud_rings_detected": int(len(all_rings)),
+        "processing_time_seconds": round(float(processing_time), 2)
+    }
+
+    return {
+        "results": results_list,
+        "summary": summary_obj
+    }

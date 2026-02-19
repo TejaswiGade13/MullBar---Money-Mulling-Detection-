@@ -209,10 +209,47 @@ async function analyzeFile() {
 function renderDashboard(data) {
     let results, graph, explanations;
 
-    // Handle new List-based response format (User Request 315)
-    // If results is an array, we must aggregate it back for the dashboard
-    if (Array.isArray(data.results)) {
-        console.log("Processing list-based results...");
+    // Handle new Account-Centric response format (User Request 331)
+    if (data.results && Array.isArray(data.results) && data.results.length > 0 && data.results[0].suspicious_account) {
+        console.log("Processing account-centric results...");
+        const listData = data.results;
+
+        // We need to reconstruct the "global" view for the dashboard
+        const uniqueSuspicious = [];
+        const seenAccs = new Set();
+
+        const uniqueRings = [];
+        const seenRings = new Set();
+
+        listData.forEach(entry => {
+            // Process Account
+            const acc = entry.suspicious_account;
+            if (acc && !seenAccs.has(acc.account_id)) {
+                seenAccs.add(acc.account_id);
+                uniqueSuspicious.push(acc);
+            }
+
+            // Process Ring
+            const ring = entry.fraud_ring;
+            if (ring && ring.ring_id && ring.ring_id !== "N/A" && ring.ring_id !== "RING_000") {
+                if (!seenRings.has(ring.ring_id)) {
+                    seenRings.add(ring.ring_id);
+                    uniqueRings.push(ring);
+                }
+            }
+        });
+
+        results = {
+            summary: data.summary,
+            suspicious_accounts: uniqueSuspicious,
+            fraud_rings: uniqueRings
+        };
+        graph = data.graph;
+        explanations = data.explanations;
+    }
+    // Handle previous List-of-Groups format (Migration support/Fallback)
+    else if (Array.isArray(data.results)) {
+        console.log("Processing list-based groups...");
         const listData = data.results;
 
         // Aggregate Global Stats
