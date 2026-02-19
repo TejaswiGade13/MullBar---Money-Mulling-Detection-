@@ -186,7 +186,8 @@ async function analyzeFile() {
 
         if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
 
-        if (data.status === 'success') {
+        if (data.status === 'success' || Array.isArray(data.results)) {
+            // Support both old object format and new list format
             analysisData = data;
             renderDashboard(data);
             setState('results');
@@ -206,7 +207,63 @@ async function analyzeFile() {
 // ═══════════════════════════════════════════════
 
 function renderDashboard(data) {
-    const { results, graph, explanations } = data;
+    let results, graph, explanations;
+
+    // Handle new List-based response format (User Request 315)
+    // If results is an array, we must aggregate it back for the dashboard
+    if (Array.isArray(data.results)) {
+        console.log("Processing list-based results...");
+        const listData = data.results;
+
+        // Aggregate Global Stats
+        const summary = {
+            total_accounts_analyzed: data.graph ? data.graph.nodes.length : 0,
+            suspicious_accounts_flagged: 0,
+            fraud_rings_detected: 0,
+            processing_time_seconds: listData[0]?.summary?.processing_time || 0
+        };
+
+        const allSuspicious = [];
+        const allRings = [];
+
+        listData.forEach(entry => {
+            // Aggregate rings
+            if (entry.fraud_rings) {
+                allRings.push(...entry.fraud_rings);
+            }
+            // Aggregate accounts
+            if (entry.suspicious_accounts) {
+                allSuspicious.push(...entry.suspicious_accounts);
+            }
+        });
+
+        // Deduplicate accounts (an account might appear in multiple ring entries)
+        const seenAccs = new Set();
+        const uniqueSuspicious = [];
+        allSuspicious.forEach(acc => {
+            if (!seenAccs.has(acc.account_id)) {
+                seenAccs.add(acc.account_id);
+                uniqueSuspicious.push(acc);
+            }
+        });
+
+        summary.suspicious_accounts_flagged = uniqueSuspicious.length;
+        summary.fraud_rings_detected = allRings.length;
+
+        results = {
+            summary: summary,
+            suspicious_accounts: uniqueSuspicious,
+            fraud_rings: allRings
+        };
+        graph = data.graph;
+        explanations = data.explanations;
+    } else {
+        // Fallback for old object format
+        results = data.results;
+        graph = data.graph;
+        explanations = data.explanations;
+    }
+
     selectedAccount = null;
     activeTab = 'graph';
 
