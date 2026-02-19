@@ -49,10 +49,10 @@ def generate_output(
         "suspicious_accounts": suspicious_list,
         "fraud_rings": fraud_rings_list,
         "summary": {
-            "total_accounts_analyzed": total_nodes,
-            "suspicious_accounts_flagged": len(suspicious_list),
-            "fraud_rings_detected": len(fraud_rings_list),
-            "processing_time_seconds": round(processing_time, 2),
+            "total_accounts_analyzed": int(total_nodes),
+            "suspicious_accounts_flagged": int(len(suspicious_list)),
+            "fraud_rings_detected": int(len(fraud_rings_list)),
+            "processing_time_seconds": round(float(processing_time), 2),
         },
     }
 
