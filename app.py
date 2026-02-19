@@ -14,13 +14,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Deferred imports for faster startup
-# from engine.ingestion import parse_csv
-# from engine.pipeline import analyze
+from engine.ingestion import parse_csv
+from engine.pipeline import analyze_pipeline
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
-app.json.sort_keys = False
-app.config["JSON_SORT_KEYS"] = False
 
 
 @app.route("/")
@@ -48,9 +45,6 @@ def analyze_csv():
         return jsonify({"status": "error", "detail": "File must be a CSV."}), 400
 
     try:
-        from engine.ingestion import parse_csv
-        from engine.pipeline import analyze
-        
         content = file.read()
         df = parse_csv(content)
     except ValueError as e:
@@ -60,7 +54,7 @@ def analyze_csv():
         return jsonify({"status": "error", "detail": "No valid transactions found in CSV."}), 400
 
     try:
-        result = analyze(df)
+        result = analyze_pipeline(df)
         return jsonify({"status": "success", **result})
     except Exception as e:
         traceback.print_exc()
