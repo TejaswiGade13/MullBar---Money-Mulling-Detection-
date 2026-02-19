@@ -203,7 +203,7 @@ async function analyzeFile() {
             return;
         }
 
-        if (data.status === 'success' || Array.isArray(data.results)) {
+        if (data.status === 'success') {
             analysisData = data;
             renderDashboard(data);
             setState('results');

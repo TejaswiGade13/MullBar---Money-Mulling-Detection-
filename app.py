@@ -8,29 +8,17 @@ import io
 import os
 import traceback
 
-from flask import Flask, request, jsonify, render_template, send_from_directory
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from flask import Flask, request, jsonify, send_from_directory
 
 from engine.ingestion import parse_csv
-from engine.pipeline import analyze_pipeline
-
-# In-memory cache for analysis results (hash of CSV content -> result)
-analysis_cache = {}
+from engine.pipeline import analyze
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
 
 @app.route("/")
 def index():
-    return render_template("index.html")
-
-
-@app.route("/health")
-def health():
-    return "OK", 200
+    return send_from_directory("templates", "index.html")
 
 
 @app.route("/api/analyze", methods=["POST"])
@@ -57,7 +45,7 @@ def analyze_csv():
         return jsonify({"status": "error", "detail": "No valid transactions found in CSV."}), 400
 
     try:
-        result = analyze_pipeline(df)
+        result = analyze(df)
         return jsonify({"status": "success", **result})
     except Exception as e:
         traceback.print_exc()

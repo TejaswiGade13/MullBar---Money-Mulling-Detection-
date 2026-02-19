@@ -4,8 +4,6 @@ Produces the strict JSON output format.
 """
 
 
-from collections import defaultdict
-
 def generate_output(
     suspicious_accounts: dict,
     all_rings: list[dict],
