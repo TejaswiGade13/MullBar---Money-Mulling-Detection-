@@ -4,4 +4,4 @@ networkx
 python-multipart
 # Requirements for specific algorithms if needed (e.g. scipy/numpy included in pandas/networkx deps usually)
 numpy
-gunicorn==25.1.0
+gunicorn>=20.1.0
