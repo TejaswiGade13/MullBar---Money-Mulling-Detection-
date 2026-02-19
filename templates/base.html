@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MulBar - Flask Edition</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS Variables -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Cytoscape JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+</head>
+
+<body class="min-h-screen flex flex-col w-full transition-colors duration-300"
+    style="background: var(--color-primary-bg); color: var(--color-text-main);">
+
+    <!-- Header (Exact React Replica) -->
+    <header
+        class="flex items-center justify-between px-4 sm:px-6 md:px-8 py-3 sm:py-4 border-b w-full shrink-0 z-50 sticky top-0 transition-colors duration-300"
+        style="border-color: var(--color-border); background: var(--color-card-bg);">
+
+        <div class="flex items-center gap-2 sm:gap-3 cursor-pointer select-none" onclick="window.location.reload()">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm transition-colors duration-300"
+                style="background: var(--color-accent-green); color: #FFFFFF;">
+                M
+            </div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight transition-colors duration-300"
+                style="color: var(--color-text-main);">
+                MulBar
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button id="theme-toggle"
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-colors duration-200 hover:bg-black/5 dark:hover:bg-white/10"
+                title="Toggle Theme">
+                <span id="theme-icon" class="text-lg">☀️</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 flex flex-col">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-4 sm:py-6 text-xs sm:text-sm px-4 shrink-0 transition-colors duration-300"
+        style="color: var(--color-text-muted);">
+        MullBar © 2026 — Money Muling Risk Intelligence Platform
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Theme Logic (Exact match)
+        const toggle = document.getElementById('theme-toggle');
+        const icon = document.getElementById('theme-icon');
+        const html = document.documentElement;
+
+        // Initial Check (Default Dark as per Flask req, or specific?)
+        // User asked for OLED Black. Let's default to class="dark"
+        if (!localStorage.getItem('theme')) {
+            html.classList.add('dark'); // Default Dark
+        } else {
+            if (localStorage.getItem('theme') === 'dark') html.classList.add('dark');
+        }
+
+        updateIcon();
+
+        toggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+            updateIcon();
+        });
+
+        function updateIcon() {
+            const isDark = html.classList.contains('dark');
+            icon.textContent = isDark ? '☀️' : '🌙';
+            // Wait, React Logic:
+            // darkMode ? ☀️ (Sun to switch to light) : 🌙 (Moon to switch to dark)
+            // My icon logic matches.
+        }
+    </script>
+</body>
+
+</html>
