@@ -370,7 +370,12 @@ function renderDashboard(data) {
     });
 
     document.getElementById('download-btn').addEventListener('click', () => {
-        const json = JSON.stringify(results, null, 2);
+        // Fix: Pack exactly results and summary from the original API response
+        const exportObj = {
+            results: analysisData.results,
+            summary: analysisData.summary
+        };
+        const json = JSON.stringify(exportObj, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
