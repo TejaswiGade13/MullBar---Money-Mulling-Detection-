@@ -19,7 +19,7 @@ from engine.output import generate_output
 from engine.visualization import build_viz_data
 
 
-def analyze_pipeline(df: pd.DataFrame) -> dict:
+def analyze(df: pd.DataFrame) -> dict:
     """
     Full analysis pipeline.
     Returns {
