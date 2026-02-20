@@ -14,7 +14,7 @@ from collections import defaultdict
 #  CYCLE DETECTION  (length 3–5, bounded DFS)
 # ─────────────────────────────────────────────
 
-def detect_cycles(G: nx.DiGraph, min_len: int = 3, max_len: int = 5, max_results: int = 200) -> list[dict]:
+def detect_cycles(G: nx.DiGraph, min_len: int = 3, max_len: int = 5, max_results: int = 50) -> list[dict]:
     """
     Detect circular fund routing (cycles of length 3–5).
     Uses SCC pruning first, then bounded DFS within each SCC.

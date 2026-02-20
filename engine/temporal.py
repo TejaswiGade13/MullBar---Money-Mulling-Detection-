@@ -1,7 +1,6 @@
 """
-MullBar — Temporal Analysis (OPTIMIZED)
-Computes transaction velocity and burst activity per node.
-Uses pre-grouped DataFrames instead of per-node filtering.
+MullBar — Temporal Analysis (VECTORIZED)
+Computes transaction velocity and burst activity per node using optimized Pandas operations.
 """
 
 import pandas as pd
@@ -14,65 +13,73 @@ def compute_temporal_features(G: nx.DiGraph, df: pd.DataFrame) -> dict:
     Compute temporal features for every node.
     Returns dict: account_id -> {velocity, burst_score, avg_interval_hours}
     """
-    df_ts = df.copy()
-    df_ts["timestamp"] = pd.to_datetime(df_ts["timestamp"])
+    if df.empty:
+        return {}
 
-    # Pre-group timestamps by account (both sent and received)
-    account_timestamps = {}
-    sent_groups = df_ts.groupby("sender_id")["timestamp"].apply(list)
-    recv_groups = df_ts.groupby("receiver_id")["timestamp"].apply(list)
+    # 1. Prepare Long-Format Data (Sender + Receiver combined)
+    # We need a single stream of timestamps per account
+    sent = df[["sender_id", "timestamp"]].rename(columns={"sender_id": "account_id"})
+    recv = df[["receiver_id", "timestamp"]].rename(columns={"receiver_id": "account_id"})
+    
+    all_txns = pd.concat([sent, recv], ignore_index=True)
+    all_txns["timestamp"] = pd.to_datetime(all_txns["timestamp"])
+    
+    # Sort for rolling operations
+    all_txns = all_txns.sort_values(["account_id", "timestamp"])
 
-    for node in G.nodes():
-        ts_list = []
-        if node in sent_groups.index:
-            ts_list.extend(sent_groups[node])
-        if node in recv_groups.index:
-            ts_list.extend(recv_groups[node])
-        if ts_list:
-            ts_list.sort()
-        account_timestamps[node] = ts_list
+    # 2. Compute Basic Stats (Count, Time Span, Velocity)
+    # Aggregation per account
+    stats = all_txns.groupby("account_id")["timestamp"].agg(["min", "max", "count"])
+    
+    # Avoid division by zero: clip min duration to 0.01 days (~15 mins)
+    stats["days"] = (stats["max"] - stats["min"]).dt.total_seconds() / 86400
+    stats["days"] = stats["days"].clip(lower=0.01) 
+    
+    stats["velocity"] = stats["count"] / stats["days"]
+    stats["avg_hourly_rate"] = stats["count"] / (stats["days"] * 24)
 
+    # 3. Compute Burst Score (Rolling Time Window)
+    # We set index to timestamp to use time-aware rolling
+    # We group by account_id to isolate bursts per account
+    
+    # Note: We must ensure index is sorted (it is).
+    # We use a dummy column to count.
+    temp_df = all_txns.set_index("timestamp")
+    
+    # .rolling('1h') on groupby object looks at time index
+    # .count() counts non-null values in window
+    # We group again by account_id to find the MAX burst peak for each account
+    max_bursts = temp_df.groupby("account_id")["account_id"].rolling("1h").count().groupby("account_id").max()
+    
+    stats["max_burst"] = max_bursts
+    
+    # Burst Score = Peak Rate / Average Rate
+    # Handle zero average rate (though count >= 1 implies avg > 0 due to clip)
+    stats["burst_score"] = stats["max_burst"] / stats["avg_hourly_rate"].clip(lower=0.01)
+
+    # 4. Compute Average Interval
+    # diff() computes time between consecutive transactions per group
+    all_txns["interval_hours"] = all_txns.groupby("account_id")["timestamp"].diff().dt.total_seconds() / 3600
+    avg_intervals = all_txns.groupby("account_id")["interval_hours"].mean()
+    
+    stats["avg_interval_hours"] = avg_intervals.fillna(0)
+
+    # 5. Format Results
+    # Convert to dictionary {account_id: {...}}
+    # We use round() to keep JSON clean
+    
     results = {}
-    for node in G.nodes():
-        ts_list = account_timestamps.get(node, [])
+    for acc_id, row in stats.iterrows():
+         results[acc_id] = {
+             "velocity": round(row["velocity"], 2),
+             "burst_score": round(row["burst_score"], 2),
+             "avg_interval_hours": round(row["avg_interval_hours"], 2)
+         }
 
-        if len(ts_list) < 2:
-            results[node] = {
-                "velocity": 0.0,
-                "burst_score": 0.0,
-                "avg_interval_hours": 0.0,
-            }
-            continue
-
-        # --- Transaction velocity (txns per day) ---
-        time_span = (ts_list[-1] - ts_list[0]).total_seconds()
-        days = max(time_span / 86400, 0.01)
-        velocity = len(ts_list) / days
-
-        # --- Burst activity (sliding window with two-pointer) ---
-        # Count max transactions in any 1-hour window using O(n) two-pointer
-        max_burst = 1
-        hour_ns = np.timedelta64(1, 'h')
-        left = 0
-        for right in range(len(ts_list)):
-            while ts_list[right] - ts_list[left] > hour_ns:
-                left += 1
-            max_burst = max(max_burst, right - left + 1)
-
-        avg_hourly = len(ts_list) / max(time_span / 3600, 1)
-        burst_score = max_burst / max(avg_hourly, 0.01) if avg_hourly > 0 else 0
-
-        # --- Average interval ---
-        intervals = [
-            (ts_list[i + 1] - ts_list[i]).total_seconds() / 3600
-            for i in range(len(ts_list) - 1)
-        ]
-        avg_interval = sum(intervals) / len(intervals) if intervals else 0
-
-        results[node] = {
-            "velocity": round(velocity, 2),
-            "burst_score": round(burst_score, 2),
-            "avg_interval_hours": round(avg_interval, 2),
-        }
-
+    # Ensure all graph nodes are in results (handle isolated nodes with no txns? Graph build guarantees edges)
+    # But just in case
+    for n in G.nodes():
+        if n not in results:
+            results[n] = {"velocity": 0.0, "burst_score": 0.0, "avg_interval_hours": 0.0}
+            
     return results
