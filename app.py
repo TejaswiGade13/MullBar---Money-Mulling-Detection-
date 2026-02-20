@@ -21,6 +21,12 @@ def index():
     return send_from_directory("templates", "index.html")
 
 
+@app.route("/health")
+def health_check():
+    """Simple health check for Render convenience."""
+    return jsonify({"status": "ok"}), 200
+
+
 @app.route("/api/analyze", methods=["POST"])
 def analyze_csv():
     """Accept CSV file upload, run full analysis pipeline, return results."""
