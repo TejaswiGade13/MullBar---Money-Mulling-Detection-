@@ -16,6 +16,13 @@ Or how complex transaction webs can reveal hidden fraud rings?
 
 Built with a focus on **explainability, clarity, and real-world patterns**, this project demonstrates how graph theory can power intelligent financial monitoring systems.
 
+## ⚠️ Important Notice
+
+> 🚨 **The web app may take up to 50 seconds or more to load**, especially on the first visit due to cold start on the hosting platform.  
+>
+> If you encounter a **502 Bad Gateway error**, don’t worry — simply refresh the page and it should load normally.  
+>
+> Thank you for your patience 🙏
 ---
 
 <p align="center">
