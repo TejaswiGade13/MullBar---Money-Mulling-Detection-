@@ -18,6 +18,31 @@ Built with a focus on **explainability, clarity, and real-world patterns**, this
 
 ---
 
+<p align="center">
+  <img src="assets/Screenshot 2026-02-20 072011.png" alt="Architecture Diagram" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-02-20 072558.png" alt="Architecture Diagram" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-02-20 072608.png" alt="Architecture Diagram" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-02-20 072622.png" alt="Architecture Diagram" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-02-20 072641.png" alt="Architecture Diagram" width="700"/>
+</p>
+
+<p align="center">
+  <img src="assets/Screenshot 2026-02-20 072656.png" alt="Architecture Diagram" width="700"/>
+</p>
+
+
 ## 🌐 Live Demo
 
 **Deployment:**  
@@ -49,7 +74,9 @@ Built with a focus on **explainability, clarity, and real-world patterns**, this
 ---
 
 ## 🏗 System Architecture
-
+<p align="center">
+  <img src="assets/1. Front-End Layer (Web + Mobile) - visual selection (13).png" alt="Architecture Diagram" width="700"/>
+</p>
 
 ---
 
@@ -105,19 +132,13 @@ Rule-based weighted scoring model aggregates detected behaviors.
 
 ---
 
-Transaction Dataset (CSV)
-↓
-Data Ingestion Module
-↓
-Graph Builder (Directed Graph)
-↓
-Pattern Detection Engine
-↓
-Fraud Ring Identification
-↓
-Suspicion Scoring Engine
-↓
-Flask Web Interface
+## 🏗 System Architecture
+<p align="center">
+  <img src="assets/1. Front-End Layer (Web + Mobile) - visual selection (14).png" alt="Architecture Diagram" width="700"/>
+</p>
+
+
+
 
 
 ## 📊 Suspicion Score Methodology
