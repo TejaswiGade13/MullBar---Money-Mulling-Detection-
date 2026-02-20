@@ -1,7 +1,6 @@
 """
-MullBar — False Positive Control (OPTIMIZED)
+MullBar — False Positive Control
 Filters out legitimate high-volume accounts (merchants, payroll).
-Uses pre-grouped DataFrames instead of per-account filtering.
 """
 
 import networkx as nx
@@ -24,27 +23,19 @@ def filter_false_positives(
     df_copy = df.copy()
     df_copy["timestamp"] = pd.to_datetime(df_copy["timestamp"])
 
-    # Pre-group by sender and receiver for fast lookup
-    recv_groups = dict(list(df_copy.groupby("receiver_id")))
-    send_groups = dict(list(df_copy.groupby("sender_id")))
-
     for account_id, account_data in suspicious_accounts.items():
-        # Combine sent + received transactions
-        parts = []
-        if account_id in send_groups:
-            parts.append(send_groups[account_id])
-        if account_id in recv_groups:
-            parts.append(recv_groups[account_id])
+        account_txns = df_copy[
+            (df_copy["sender_id"] == account_id) | (df_copy["receiver_id"] == account_id)
+        ]
 
-        if not parts:
+        if account_txns.empty:
             filtered[account_id] = account_data
             continue
 
-        account_txns = pd.concat(parts)
+        is_merchant = _is_likely_merchant(G, account_id, account_txns)
+        is_payroll = _is_likely_payroll(G, account_id, account_txns)
 
-        is_merchant = _is_likely_merchant(G, account_id, account_txns, recv_groups.get(account_id))
-        is_payroll = _is_likely_payroll(G, account_id, account_txns, send_groups.get(account_id))
-
+        # Rule: don't flag accounts with high volume + high counterparty diversity + no structural anomalies
         has_structural = _has_structural_anomaly(account_data)
 
         if (is_merchant or is_payroll) and not has_structural:
@@ -76,9 +67,10 @@ def filter_false_positives(
     return filtered, removed_ring_ids
 
 
-def _is_likely_merchant(G, account_id, txns, incoming=None):
+def _is_likely_merchant(G, account_id, txns):
     """Merchant: many unique incoming senders, diverse amounts, long time span."""
-    if incoming is None or len(incoming) < 15:
+    incoming = txns[txns["receiver_id"] == account_id]
+    if len(incoming) < 15:
         return False
 
     unique_senders = incoming["sender_id"].nunique()
@@ -91,9 +83,10 @@ def _is_likely_merchant(G, account_id, txns, incoming=None):
     return False
 
 
-def _is_likely_payroll(G, account_id, txns, outgoing=None):
+def _is_likely_payroll(G, account_id, txns):
     """Payroll: regular same-amount transfers to many recipients."""
-    if outgoing is None or len(outgoing) < 8:
+    outgoing = txns[txns["sender_id"] == account_id]
+    if len(outgoing) < 8:
         return False
 
     out_degree = G.out_degree(account_id)

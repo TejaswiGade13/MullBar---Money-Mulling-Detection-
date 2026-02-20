@@ -63,7 +63,7 @@ def analyze(df: pd.DataFrame) -> dict:
     all_rings = aggregate_rings(G, suspicious_accounts, all_rings)
 
     # 9. Explainability
-    explanations = generate_explanations(G, suspicious_accounts, temporal_features)
+    explanations = generate_explanations(G, suspicious_accounts)
 
     # 10. Generate outputs
     processing_time = time.time() - start_time

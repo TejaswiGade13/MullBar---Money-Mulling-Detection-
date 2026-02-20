@@ -7,7 +7,7 @@ import networkx as nx
 
 FACTOR_DESCRIPTIONS = {
     "cycle": "Involved in circular fund routing (money flows in a loop)",
-    "smurfing": "Participant in structured transaction splitting (many small transfers within 72h window)",
+    "smurfing": "Participant in structured transaction splitting (many small transfers)",
     "shell_network": "Part of a layered passthrough chain using shell accounts",
     "velocity": "Unusually high transaction frequency or burst activity",
     "volume_anomaly": "Transaction volume significantly deviates from dataset median",
@@ -16,7 +16,7 @@ FACTOR_DESCRIPTIONS = {
 
 
 def generate_explanations(
-    G: nx.DiGraph, suspicious_accounts: dict, temporal_features: dict = None
+    G: nx.DiGraph, suspicious_accounts: dict
 ) -> dict:
     """
     For each suspicious account, generate:
@@ -38,28 +38,10 @@ def generate_explanations(
         risk_breakdown = []
         for factor, fscore in sorted(factor_scores.items(), key=lambda x: -x[1]):
             if fscore > 0:
-                desc = FACTOR_DESCRIPTIONS.get(factor, "")
-                
-                # Add dynamic details for time-based factors
-                if factor == "velocity" and temporal_features:
-                    tf = temporal_features.get(account_id, {})
-                    vel = tf.get("velocity", 0)
-                    burst = tf.get("burst_score", 0)
-
-                    # Dynamic description based on what specifically triggered the score
-                    if vel > 5.0 and burst > 5.0:
-                        desc = f"High transaction frequency ({vel:.1f}/day) and burst activity (score {burst:.1f})"
-                    elif vel > 5.0:
-                        desc = f"Unusually high transaction frequency ({vel:.1f} txns/day)"
-                    elif burst > 5.0:
-                        desc = f"Sudden burst of activity relative to average behavior (burst score {burst:.1f})"
-                    else:
-                        desc = f"Velocity anomalies detected ({vel:.1f}/day, burst {burst:.1f})"
-                
                 risk_breakdown.append({
                     "factor": factor,
                     "score": fscore,
-                    "description": desc,
+                    "description": FACTOR_DESCRIPTIONS.get(factor, ""),
                 })
 
         # Transaction summary

@@ -11,8 +11,12 @@ def generate_output(
     processing_time: float,
 ) -> dict:
     """
-    Generate the original flat JSON output schema.
-    This fulfills the dashboard's expectations for simplicity and speed.
+    Generate the exact JSON output schema:
+    {
+      "suspicious_accounts": [...],
+      "fraud_rings": [...],
+      "summary": {...}
+    }
     """
     # Build suspicious_accounts array (sorted by score desc)
     suspicious_list = []
@@ -24,7 +28,7 @@ def generate_output(
         primary_ring = data["ring_ids"][0] if data.get("ring_ids") else "RING_000"
         suspicious_list.append({
             "account_id": account_id,
-            "suspicion_score": float(data["suspicion_score"]),
+            "suspicion_score": data["suspicion_score"],
             "detected_patterns": data["detected_patterns"],
             "ring_id": primary_ring,
         })
@@ -38,17 +42,17 @@ def generate_output(
             "ring_id": ring_id,
             "member_accounts": ring["members"],
             "pattern_type": ring["pattern_type"],
-            "risk_score": float(risk_score),
+            "risk_score": risk_score,
         })
 
     output = {
         "suspicious_accounts": suspicious_list,
         "fraud_rings": fraud_rings_list,
         "summary": {
-            "total_accounts_analyzed": int(total_nodes),
+            "total_accounts_analyzed": total_nodes,
             "suspicious_accounts_flagged": len(suspicious_list),
             "fraud_rings_detected": len(fraud_rings_list),
-            "processing_time_seconds": round(float(processing_time), 2),
+            "processing_time_seconds": round(processing_time, 2),
         },
     }
 
