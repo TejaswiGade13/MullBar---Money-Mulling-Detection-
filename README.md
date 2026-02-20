@@ -1,199 +1,143 @@
-Project Title
+# 🕵️ MullBar — Money Muling & Fraud Ring Detection
 
-MullBar: Graph-Based Money Muling & Fraud Ring Detection System
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Flask](https://img.shields.io/badge/Flask-Web%20Framework-black)
+![NetworkX](https://img.shields.io/badge/Graph-NetworkX-orange)
+![Status](https://img.shields.io/badge/Status-Active-success)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Built By Students](https://img.shields.io/badge/Built%20By-Students-purple)
 
-Live Demo URL
+> **A graph-based fraud detection system built to uncover suspicious transaction patterns — the student way.**
 
-Local Deployment:
+Ever wondered how banks detect money muling networks?  
+Or how complex transaction webs can reveal hidden fraud rings?
 
-http://127.0.0.1:5000
+**MullBar** is a graph-driven fraud detection platform that analyzes transaction datasets to uncover suspicious accounts, detect coordinated fraud rings, and compute interpretable risk scores — all through a clean web interface.
+
+Built with a focus on **explainability, clarity, and real-world patterns**, this project demonstrates how graph theory can power intelligent financial monitoring systems.
+
+---
+
+## 🌐 Live Demo
+
+**Deployment:**  
+👉 https://mulbarr.onrender.com
+
+*(Replace with your Render URL when deployed)*
+
+---
+
+## 🧰 Tech Stack
+
+### 🧠 Backend
+- Python 3
+- Flask
+- NetworkX
+- Pandas
+- NumPy
+
+### 🎨 Frontend
+- HTML
+- CSS
+- JavaScript
+
+### 📊 Data Processing
+- CSV transaction datasets
+- Graph analytics
+- Rule-based scoring engine
+
+---
+
+## 🏗 System Architecture
 
 
-(Replace with production URL if deployed on Render / AWS / etc.)
+---
 
-Tech Stack
-Backend
+## ⚙ Algorithm Approach
 
-Python 3.x
+MullBar uses **graph theory + behavioral heuristics** to detect fraud patterns.
 
-Flask
+### 1️⃣ Graph Construction
+- Directed graph using NetworkX
+- Nodes → Accounts
+- Edges → Transactions  
 
-NetworkX
+**Complexity:** `O(V + E)`
 
-Pandas
+---
 
-NumPy
+### 2️⃣ Cycle Detection (Circular Transfers)
+Uses **Depth First Search (DFS)** to detect loops like:
 
-Frontend
+A → B → C → A  
 
-HTML
+**Complexity:** `O(V + E)`
 
-CSS
+---
 
-JavaScript
+### 3️⃣ Multi-Hop Layering Detection
+Uses **Breadth First Search (BFS)** to detect long transaction chains.  
 
-🏗 System Architecture:
+**Complexity:** `O(V + E)`
+
+---
+
+### 4️⃣ Smurfing Detection
+Degree-based analysis to detect:
+- High fan-in
+- High fan-out  
+
+**Complexity:** `O(V)`
+
+---
+
+### 5️⃣ Fraud Ring Detection
+Strongly Connected Components (SCC) analysis identifies tightly connected clusters.  
+
+**Complexity:** `O(V + E)`
+
+---
+
+### 6️⃣ Suspicion Score Computation
+Rule-based weighted scoring model aggregates detected behaviors.  
+
+**Complexity:** `O(V)`
+
+---
 
 Transaction Dataset (CSV)
-            ↓
+↓
 Data Ingestion Module
-            ↓
-Graph Builder (NetworkX Directed Graph)
-            ↓
+↓
+Graph Builder (Directed Graph)
+↓
 Pattern Detection Engine
-            ↓
+↓
 Fraud Ring Identification
-            ↓
+↓
 Suspicion Scoring Engine
-            ↓
-Flask Web Interface (Visualization & Results)
+↓
+Flask Web Interface
 
-🔍 Algorithms Used in MullBar
 
-The system uses Graph Theory–based algorithms to detect structured financial fraud patterns.
+## 📊 Suspicion Score Methodology
 
-1️⃣ Graph Construction
+Each account receives a **0–100 risk score** based on behavioral indicators.
 
-Library Used: NetworkX
-Type: Directed Graph (DiGraph)
+### 🎯 Scoring Factors
 
-Algorithm:
+| Factor | Weight |
+|--------|--------|
+| Cycle Participation | +30 |
+| Multi-Hop Layering | +20 |
+| Star Centrality | +15 |
+| High Transaction Frequency | +15 |
+| Large Transaction Amount | +20 |
 
-Add nodes for each unique account
+---
 
-Add directed edges for each transaction
+### 🧮 Final Score Formula
 
-Complexity:
-
-O(V + E)
-
-Where:
-
-V = Number of accounts
-
-E = Number of transactions
-
-2️⃣ Cycle Detection Algorithm
-
-Technique Used: Depth First Search (DFS)
-
-Purpose:
-
-Detect circular transaction flows such as:
-
-A → B → C → A
-
-Why DFS?
-
-DFS efficiently detects back edges in directed graphs, which indicate cycles.
-
-Complexity:
-
-O(V + E)
-
-3️⃣ Multi-Hop (Layered Transfer) Detection
-
-Technique Used: Breadth First Search (BFS)
-
-Purpose:
-
-Detect long transaction chains such as:
-
-Victim → Mule1 → Mule2 → Mule3 → Hacker
-
-Why BFS?
-
-BFS explores graph level-by-level, making it suitable for detecting transaction depth and layering.
-
-Complexity:
-
-O(V + E)
-
-4️⃣ Smurfing Detection (Fan-In & Fan-Out)
-
-Technique Used: Degree-Based Analysis
-
-Fan-Out Detection:
-
-Compute Out-Degree of each node
-
-Flag nodes with unusually high outgoing connections
-
-Fan-In Detection:
-
-Compute In-Degree of each node
-
-Flag nodes receiving funds from many accounts
-
-Why Degree Analysis?
-
-Smurfing patterns are structural behaviors reflected in node connectivity.
-
-Complexity:
-
-O(V)
-
-(Degree computation is linear in number of nodes)
-
-5️⃣ Fraud Ring Detection
-
-Technique Used: Connected Components Analysis
-
-Purpose:
-
-Identify clusters of tightly connected accounts operating together.
-
-Method:
-
-Find strongly connected components (SCC) in directed graph
-OR
-
-Identify connected subgraphs
-
-Why This Method?
-
-Fraud rings often form dense internal transaction groups.
-
-Complexity:
-
-O(V + E)
-
-6️⃣ Suspicion Score Computation
-
-Technique Used: Rule-Based Weighted Scoring Model
-
-Approach:
-
-Aggregate pattern detections into weighted risk score:
-
-Cycle involvement
-
-Multi-hop depth
-
-Smurfing behavior
-
-Transaction frequency
-
-Transaction volume
-
-Complexity:
-
-O(V)
-
-(Score computed once per account)
-
-📊 Suspicion Score Methodology
-
-Each account receives a Suspicion Score (0–100) based on detected behaviors.
-
-Scoring Components
-Factor	Weight
-Cycle Participation	+30
-Multi-Hop Involvement	+20
-Star Centrality	+15
-High Transaction Frequency	+15
-Large Transaction Amount	+20
-Final Formula
 Suspicion Score =
 CycleScore +
 LayeringScore +
@@ -201,100 +145,73 @@ CentralityScore +
 FrequencyScore +
 AmountScore
 
-Risk Classification
-Score Range	Risk Level
-0 – 30	Low Risk
-31 – 60	Medium Risk
-61 – 80	High Risk
-81 – 100	Critical Risk
-Good Model Characteristics
 
-High scores for structured fraud rings
+---
 
-Low scores for normal users
+### 🚨 Risk Levels
 
-Clear separation between suspicious and legitimate accounts
+| Score | Risk |
+|------|------|
+| 0–30 | Low |
+| 31–60 | Medium |
+| 61–80 | High |
+| 81–100 | Critical |
 
-Reduced false positives
+---
 
-⚙ Installation & Setup
-1️⃣ Extract ZIP
+## 🧪 Installation & Setup
 
-Unzip the project folder.
+### 1️⃣ Clone the repo
 
-2️⃣ Navigate to Project Directory
-cd MullBar---Money-Mulling-Detection-
+```bash
+git clone https://github.com/YOUR_USERNAME/mullbar.git
+cd mullbar
 
-3️⃣ Create Virtual Environment
 python -m venv venv
-
-
-Activate:
-
-Windows:
 
 venv\Scripts\activate
 
+pip install -r requirements.txt 
 
-Mac/Linux:
-
-source venv/bin/activate
-
-4️⃣ Install Dependencies
-pip install -r requirements.txt
-
-5️⃣ Run Application
-python app.py
+👉 http://127.0.0.1:5000
+```
 
 
-Open in browser:
+## 🚀 Usage Instructions
 
-http://127.0.0.1:5000
+1️⃣ Launch the web app  
+2️⃣ Upload a transaction CSV dataset  
+3️⃣ Click **Run Analysis**  
 
-🚀 Usage Instructions
+The system will:
 
-Launch the application.
+✅ Build transaction graph  
+✅ Detect suspicious patterns  
+✅ Identify fraud rings  
+✅ Compute risk scores  
 
-Upload transaction dataset (CSV format).
+You’ll see:
 
-Click Run Analysis.
+- Suspicious accounts list  
+- Fraud ring summaries  
+- Risk classifications  
+- Behavioral insights  
 
-System will:
+---
 
-Build transaction graph
+## ⚠ Known Limitations
 
-Detect suspicious patterns
+- Batch processing only (no real-time streaming)  
+- Rule-based scoring (not ML-driven)  
+- Performance may degrade for very large datasets  
+- Possible false positives for high-volume legitimate accounts  
+- Requires correctly formatted CSV input  
 
-Identify fraud rings
+---
 
-Calculate suspicion scores
+## 👩‍💻 Team Members
 
-View:
-
-Fraud Ring Summary
-
-Suspicious Accounts List
-
-Risk Levels
-
-⚠ Known Limitations
-
-Batch processing only (not real-time streaming)
-
-Rule-based scoring (not ML-based)
-
-Scalability limited for very large datasets (>1M transactions)
-
-Possible false positives in high-volume legitimate accounts
-
-Requires properly formatted CSV input
-
-👩‍💻 Team Members
-
-Gade Tejaswi
-
-Medamreddy Sivani 
-
-Chintanippula Vidya Sravani 
- 
+- **Gade Tejaswi**  
+- **Medamreddy Sivani**  
+- **Chintanippula Vidya Sravani**  
 
