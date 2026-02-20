@@ -50,29 +50,7 @@ Built with a focus on **explainability, clarity, and real-world patterns**, this
 
 ## 🏗 System Architecture
 
-```markdown
-## 🏗 System Architecture Flow
 
-```mermaid
-flowchart TD
-    T([MullBar System Architecture])
-
-    T --> A[Transaction Dataset (CSV)]
-    A --> B[Data Ingestion Module]
-    B --> C[Graph Builder (Directed Graph)]
-    C --> D[Pattern Detection Engine]
-    D --> E[Fraud Ring Identification]
-    E --> F[Suspicion Scoring Engine]
-    F --> G[Flask Web Interface]
-
-    classDef main fill:#84934A,color:#fff,stroke:#492828,stroke-width:2px;
-    classDef process fill:#ECECEC,stroke:#656D3F,stroke-width:2px,color:#000;
-
-    class T main;
-    class A,B,C,D,E,F,G process;
-
-The system converts raw transactions into a graph structure and runs multiple detection algorithms to uncover suspicious behaviors.
-```
 ---
 
 ## ⚙ Algorithm Approach
